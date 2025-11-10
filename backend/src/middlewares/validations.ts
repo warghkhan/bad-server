@@ -1,3 +1,4 @@
+//middlewares/validations.ts
 import { Joi, celebrate } from 'celebrate'
 import { Types } from 'mongoose'
 
@@ -21,6 +22,7 @@ export const validateOrderBody = celebrate({
                     return helpers.message({ custom: 'Невалидный id' })
                 })
             )
+            .max(100)
             .messages({
                 'array.empty': 'Не указаны товары',
             }),
@@ -32,19 +34,19 @@ export const validateOrderBody = celebrate({
                     'Указано не валидное значение для способа оплаты, возможные значения - "card", "online"',
                 'string.empty': 'Не указан способ оплаты',
             }),
-        email: Joi.string().email().required().messages({
+        email: Joi.string().email().max(254).required().messages({
             'string.empty': 'Не указан email',
         }),
-        phone: Joi.string().required().pattern(phoneRegExp).messages({
+        phone: Joi.string().required().max(30).pattern(phoneRegExp).messages({
             'string.empty': 'Не указан телефон',
         }),
-        address: Joi.string().required().messages({
+        address: Joi.string().max(2000).required().messages({
             'string.empty': 'Не указан адрес',
         }),
         total: Joi.number().required().messages({
             'string.empty': 'Не указана сумма заказа',
         }),
-        comment: Joi.string().optional().allow(''),
+        comment: Joi.string().max(1000).optional().allow('').default(''),
     }),
 })
 

@@ -1,3 +1,4 @@
+//models/product.ts
 import { unlink } from 'fs'
 import mongoose, { Document } from 'mongoose'
 import { join } from 'path'

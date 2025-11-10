@@ -1,3 +1,4 @@
+//app.ts
 import { errors } from 'celebrate'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
@@ -9,10 +10,21 @@ import { DB_ADDRESS } from './config'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
+import rateLimit from 'express-rate-limit'
 
 const { PORT = 3000 } = process.env
 const app = express()
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 100,                 
+  standardHeaders: true,   
+  legacyHeaders: false,
+  message: { success: false, message: 'Слишком много запросов, попробуйте позже' },
+  statusCode: 429,
+  
+});
+app.use(limiter);
 app.use(cookieParser())
 
 app.use(cors())
@@ -22,7 +34,7 @@ app.use(cors())
 app.use(serveStatic(path.join(__dirname, 'public')))
 
 app.use(urlencoded({ extended: true }))
-app.use(json())
+app.use(json({ limit: '1mb' }))
 
 app.options('*', cors())
 app.use(routes)

@@ -1,9 +1,10 @@
-import crypto from 'crypto'
+//controllers/auth.ts
+import crypto, { randomBytes } from 'crypto'
 import { NextFunction, Request, Response } from 'express'
 import { constants } from 'http2'
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import { Error as MongooseError } from 'mongoose'
-import { REFRESH_TOKEN } from '../config'
+import { CSRF_COOKIE, REFRESH_TOKEN } from '../config'
 import BadRequestError from '../errors/bad-request-error'
 import ConflictError from '../errors/conflict-error'
 import NotFoundError from '../errors/not-found-error'
@@ -17,15 +18,19 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         const user = await User.findUserByCredentials(email, password)
         const accessToken = user.generateAccessToken()
         const refreshToken = await user.generateRefreshToken()
+        const csrfToken = randomBytes(32).toString('hex')
         res.cookie(
             REFRESH_TOKEN.cookie.name,
             refreshToken,
             REFRESH_TOKEN.cookie.options
         )
+        res.cookie(CSRF_COOKIE.name, csrfToken, CSRF_COOKIE.options)
+
         return res.json({
             success: true,
             user,
             accessToken,
+            csrfToken,
         })
     } catch (err) {
         return next(err)
@@ -40,16 +45,18 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
         await newUser.save()
         const accessToken = newUser.generateAccessToken()
         const refreshToken = await newUser.generateRefreshToken()
-
+        const csrfToken = randomBytes(32).toString('hex')
         res.cookie(
             REFRESH_TOKEN.cookie.name,
             refreshToken,
             REFRESH_TOKEN.cookie.options
         )
+        res.cookie(CSRF_COOKIE.name, csrfToken, CSRF_COOKIE.options)
         return res.status(constants.HTTP_STATUS_CREATED).json({
             success: true,
             user: newUser,
             accessToken,
+            csrfToken,
         })
     } catch (error) {
         if (error instanceof MongooseError.ValidationError) {
@@ -127,6 +134,11 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
             maxAge: -1,
         }
         res.cookie(REFRESH_TOKEN.cookie.name, '', expireCookieOptions)
+        const expireCsrfCookieOptions = {
+            ...CSRF_COOKIE.options,
+            maxAge: -1,
+        }
+        res.cookie(CSRF_COOKIE.name, '', expireCsrfCookieOptions)
         res.status(200).json({
             success: true,
         })
@@ -149,15 +161,14 @@ const refreshAccessToken = async (
         )
         const accessToken = await userWithRefreshTkn.generateAccessToken()
         const refreshToken = await userWithRefreshTkn.generateRefreshToken()
-        res.cookie(
-            REFRESH_TOKEN.cookie.name,
-            refreshToken,
-            REFRESH_TOKEN.cookie.options
-        )
+        const csrfToken = randomBytes(32).toString('hex')
+        res.cookie(CSRF_COOKIE.name, csrfToken, CSRF_COOKIE.options)
+
         return res.json({
             success: true,
             user: userWithRefreshTkn,
             accessToken,
+            csrfToken,
         })
     } catch (error) {
         return next(error)

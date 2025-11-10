@@ -1,3 +1,4 @@
+//models/user.ts
 /* eslint-disable no-param-reassign */
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'

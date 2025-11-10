@@ -1,3 +1,4 @@
+//middlewares/file.ts
 import { Request, Express } from 'express'
 import multer, { FileFilterCallback } from 'multer'
 import { join } from 'path'
@@ -51,4 +52,13 @@ const fileFilter = (
     return cb(null, true)
 }
 
-export default multer({ storage, fileFilter })
+export default multer({
+    storage,
+    fileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024,
+        files: 1,
+        fieldNameSize: 100,
+        fieldSize: 1 * 1024 * 1024,
+    },
+})
