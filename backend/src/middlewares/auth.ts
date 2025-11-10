@@ -1,4 +1,4 @@
-//middlewares/auth.ts
+// middlewares/auth.ts
 import { NextFunction, Request, Response } from 'express'
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import { Model, Types } from 'mongoose'

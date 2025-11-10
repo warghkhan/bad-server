@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import ForbiddenError from '../errors/forbidden-error';
 import { CSRF_COOKIE } from '../config';
 
-export default function csrfProtection(req: Request, res: Response, next: NextFunction) {
+export default function csrfProtection(req: Request, _res: Response, next: NextFunction) {
   const csrfCookie = req.cookies[CSRF_COOKIE.name];
   const csrfHeader = req.get('X-CSRF-Token');
 

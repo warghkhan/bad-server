@@ -1,4 +1,4 @@
-//models/order.ts
+// models/order.ts
 /* eslint-disable prefer-arrow-callback */
 import mongoose, { Document, Schema, Types } from 'mongoose'
 import validator from 'validator'

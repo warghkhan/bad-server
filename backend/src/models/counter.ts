@@ -1,4 +1,4 @@
-//models/counter.ts
+// models/counter.ts
 import mongoose, { Document, Schema } from 'mongoose'
 
 interface ICounter extends Document {

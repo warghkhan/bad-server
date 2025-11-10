@@ -1,13 +1,12 @@
-//controllers/order.ts
+// controllers/order.ts
 import { NextFunction, Request, Response } from 'express'
 import { FilterQuery, Error as MongooseError, Types } from 'mongoose'
+import xss from 'xss'
 import BadRequestError from '../errors/bad-request-error'
 import NotFoundError from '../errors/not-found-error'
-import Order, { IOrder } from '../models/order'
+import Order, { IOrder , StatusType } from '../models/order'
 import Product, { IProduct } from '../models/product'
 import User from '../models/user'
-import xss from 'xss'
-import { StatusType } from '../models/order'
 import escapeRegExp from '../utils/escapeRegExp'
 
 // eslint-disable-next-line max-len

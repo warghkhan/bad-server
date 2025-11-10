@@ -1,4 +1,4 @@
-//utils/escapeRegExp.ts
+// utils/escapeRegExp.ts
 export default function escapeRegExp(string: string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

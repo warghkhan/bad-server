@@ -1,4 +1,4 @@
-//controllers/customers.ts
+// controllers/customers.ts
 import { NextFunction, Request, Response } from 'express'
 import { FilterQuery } from 'mongoose'
 import NotFoundError from '../errors/not-found-error'

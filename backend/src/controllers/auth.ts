@@ -1,4 +1,4 @@
-//controllers/auth.ts
+// controllers/auth.ts
 import crypto, { randomBytes } from 'crypto'
 import { NextFunction, Request, Response } from 'express'
 import { constants } from 'http2'
@@ -160,7 +160,7 @@ const refreshAccessToken = async (
             next
         )
         const accessToken = await userWithRefreshTkn.generateAccessToken()
-        const refreshToken = await userWithRefreshTkn.generateRefreshToken()
+        // const refreshToken = await userWithRefreshTkn.generateRefreshToken()
         const csrfToken = randomBytes(32).toString('hex')
         res.cookie(CSRF_COOKIE.name, csrfToken, CSRF_COOKIE.options)
 

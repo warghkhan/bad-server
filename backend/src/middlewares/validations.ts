@@ -1,4 +1,4 @@
-//middlewares/validations.ts
+// middlewares/validations.ts
 import { Joi, celebrate } from 'celebrate'
 import { Types } from 'mongoose'
 

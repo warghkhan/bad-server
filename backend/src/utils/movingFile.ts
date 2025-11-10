@@ -1,4 +1,4 @@
-//utils/movingFile.ts
+// utils/movingFile.ts
 import { existsSync, rename } from 'fs'
 import { basename, join } from 'path'
 

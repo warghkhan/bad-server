@@ -1,4 +1,4 @@
-//routes/index.ts
+// routes/index.ts
 import { NextFunction, Request, Response, Router } from 'express'
 import NotFoundError from '../errors/not-found-error'
 

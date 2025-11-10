@@ -1,11 +1,11 @@
-//middlewares/serverStatic.ts
+// middlewares/serverStatic.ts
 import { NextFunction, Request, Response } from 'express'
 import fs from 'fs'
 import path from 'path'
 
 export default function serveStatic(baseDir: string) {
     return (req: Request, res: Response, next: NextFunction) => {
-        let filePath = path.normalize(path.join(baseDir, req.path))
+        const filePath = path.normalize(path.join(baseDir, req.path))
 
         if (
             !filePath.startsWith(path.resolve(baseDir) + path.sep) &&
@@ -19,8 +19,8 @@ export default function serveStatic(baseDir: string) {
                 return next()
             }
 
-            res.sendFile(filePath, (err) => {
-                if (err) next(err)
+            res.sendFile(filePath, (sendErr) => { 
+                if (sendErr) next(sendErr)
             })
         })
     }

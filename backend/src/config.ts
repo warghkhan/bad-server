@@ -1,4 +1,4 @@
-//config.ts
+// config.ts
 import { CookieOptions } from 'express'
 import ms from 'ms'
 

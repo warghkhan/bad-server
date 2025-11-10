@@ -1,4 +1,4 @@
-//routes/customers.ts
+// routes/customers.ts
 import { Router } from 'express'
 import {
     deleteCustomer,

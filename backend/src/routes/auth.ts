@@ -1,4 +1,4 @@
-//routes/auth.ts
+// routes/auth.ts
 import { Router } from 'express'
 import {
     getCurrentUser,
