@@ -44,18 +44,14 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
         const newUser = new User({ email, password, name })
         await newUser.save()
         const accessToken = newUser.generateAccessToken()
-        const refreshToken = await newUser.generateRefreshToken()
+        //const refreshToken = await newUser.generateRefreshToken()
         //const csrfToken = randomBytes(32).toString('hex')
-        res.cookie(
-            REFRESH_TOKEN.cookie.name,
-            refreshToken,
-            REFRESH_TOKEN.cookie.options
-        )
+        //res.cookie(REFRESH_TOKEN.cookie.name, refreshToken, REFRESH_TOKEN.cookie.options)
         //res.cookie(CSRF_COOKIE.name, csrfToken, CSRF_COOKIE.options)
         return res.status(constants.HTTP_STATUS_CREATED).json({
             success: true,
             user: newUser,
-            accessToken,
+            //accessToken,
             //csrfToken,
         })
     } catch (error) {
