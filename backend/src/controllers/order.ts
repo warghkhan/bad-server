@@ -12,6 +12,16 @@ import escapeRegExp from '../utils/escapeRegExp'
 // eslint-disable-next-line max-len
 // GET /orders?page=2&limit=5&sort=totalAmount&order=desc&orderDateFrom=2024-07-01&orderDateTo=2024-08-01&status=delivering&totalAmountFrom=100&totalAmountTo=1000&search=%2B1
 
+interface CreateOrderBody {
+    address: string
+    payment: string
+    phone: string
+    total: number
+    email: string
+    items: string[]
+    comment?: string
+}
+
 export const getOrders = async (
     req: Request,
     res: Response,
@@ -206,7 +216,7 @@ export const getOrdersCurrentUser = async (
             const escapedSearch = escapeRegExp(search)
             const searchRegex = new RegExp(escapedSearch, 'i')
             const searchNumber = Number(search)
-            const products = await Product.find({ title: searchRegex })
+            const products = await Product.find<IProduct>({ title: searchRegex })
             const productIds = products.map((product) => product._id)
 
             orders = orders.filter((order) => {
@@ -311,11 +321,12 @@ export const createOrder = async (
         const products = await Product.find<IProduct>({})
         const userId = res.locals.user._id
         const { address, payment, phone, total, email, items, comment } =
-            req.body
+            req.body as CreateOrderBody
         const sanitizeString = (str: any): string =>
             typeof str === 'string' ? xss(str) : ''
 
-        items.forEach((id: Types.ObjectId) => {
+        items.forEach((idStr) => {
+            const id = new Types.ObjectId(idStr);
             const product = products.find((p) => p._id.equals(id))
             if (!product) {
                 throw new BadRequestError(`Товар с id ${id} не найден`)
