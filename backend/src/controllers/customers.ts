@@ -15,9 +15,10 @@ export const getCustomers = async (
     next: NextFunction
 ) => {
     try {
+        const page = Math.max(1, parseInt(req.query.page as string, 10) || 1)
+        const rawLimit = parseInt(req.query.limit as string, 10) || 10
+        const limit = Math.min(Math.max(1, rawLimit), 10)
         const {
-            page = 1,
-            limit = 10,
             sortField = 'createdAt',
             sortOrder = 'desc',
             registrationDateFrom,
@@ -94,22 +95,22 @@ export const getCustomers = async (
         }
 
         if (search && typeof search === 'string') {
-            const escapedSearch = escapeRegExp(search);
-            const searchRegex = new RegExp(escapedSearch, 'i');
+            const escapedSearch = escapeRegExp(search)
+            const searchRegex = new RegExp(escapedSearch, 'i')
 
             const orders = await Order.find(
                 {
                     $or: [{ deliveryAddress: searchRegex }],
                 },
                 '_id'
-            );
+            )
 
-            const orderIds = orders.map((order) => order._id);
+            const orderIds = orders.map((order) => order._id)
 
             filters.$or = [
                 { name: searchRegex },
                 { lastOrder: { $in: orderIds } },
-            ];
+            ]
         }
 
         const sort: { [key: string]: any } = {}
@@ -120,8 +121,8 @@ export const getCustomers = async (
 
         const options = {
             sort,
-            skip: (Number(page) - 1) * Number(limit),
-            limit: Number(limit),
+            skip: (page - 1) * limit,
+            limit,
         }
 
         const users = await User.find(filters, null, options).populate([
@@ -141,15 +142,15 @@ export const getCustomers = async (
         ])
 
         const totalUsers = await User.countDocuments(filters)
-        const totalPages = Math.ceil(totalUsers / Number(limit))
+        const totalPages = Math.ceil(totalUsers / limit)
 
         res.status(200).json({
             customers: users,
             pagination: {
                 totalUsers,
                 totalPages,
-                currentPage: Number(page),
-                pageSize: Number(limit),
+                currentPage: page,
+                pageSize: limit,
             },
         })
     } catch (error) {

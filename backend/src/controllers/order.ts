@@ -58,7 +58,7 @@ export const getOrders = async (
             }
             filters.status = status
         }
-/*
+        /*
         if (status) {
             if (typeof status !== 'string') {
                 return next(new BadRequestError('Невалидный параметр status'))
