@@ -4,7 +4,7 @@ import { FilterQuery, Error as MongooseError, Types } from 'mongoose'
 import xss from 'xss'
 import BadRequestError from '../errors/bad-request-error'
 import NotFoundError from '../errors/not-found-error'
-import Order, { IOrder , StatusType } from '../models/order'
+import Order, { IOrder, StatusType } from '../models/order'
 import Product, { IProduct } from '../models/product'
 import User from '../models/user'
 import escapeRegExp from '../utils/escapeRegExp'
@@ -28,9 +28,11 @@ export const getOrders = async (
     next: NextFunction
 ) => {
     try {
+        const page = Math.max(1, parseInt(req.query.page as string, 10) || 1)
+        const rawLimit = parseInt(req.query.limit as string, 10) || 10
+        const limit = Math.min(Math.max(1, rawLimit), 10)
+
         const {
-            page = 1,
-            limit = 10,
             sortField = 'createdAt',
             sortOrder = 'desc',
             status,
@@ -43,6 +45,20 @@ export const getOrders = async (
 
         const filters: FilterQuery<Partial<IOrder>> = {}
 
+        if (status != null) {
+            if (typeof status !== 'string') {
+                return next(
+                    new BadRequestError(
+                        'Невалидный параметр status: должен быть строкой'
+                    )
+                )
+            }
+            if (!Object.values(StatusType).includes(status as StatusType)) {
+                return next(new BadRequestError('Неизвестный статус заказа'))
+            }
+            filters.status = status
+        }
+/*
         if (status) {
             if (typeof status !== 'string') {
                 return next(new BadRequestError('Невалидный параметр status'))
@@ -55,7 +71,7 @@ export const getOrders = async (
             filters.status = status
         }
 
-        /*
+        
         if (status) {
             if (typeof status === 'object') {
                 //Object.assign(filters, status)
@@ -160,15 +176,15 @@ export const getOrders = async (
 
         const orders = await Order.aggregate(aggregatePipeline)
         const totalOrders = await Order.countDocuments(filters)
-        const totalPages = Math.ceil(totalOrders / Number(limit))
+        const totalPages = Math.ceil(totalOrders / limit)
 
         res.status(200).json({
             orders,
             pagination: {
                 totalOrders,
                 totalPages,
-                currentPage: Number(page),
-                pageSize: Number(limit),
+                currentPage: page,
+                pageSize: limit,
             },
         })
     } catch (error) {
@@ -216,7 +232,9 @@ export const getOrdersCurrentUser = async (
             const escapedSearch = escapeRegExp(search)
             const searchRegex = new RegExp(escapedSearch, 'i')
             const searchNumber = Number(search)
-            const products = await Product.find<IProduct>({ title: searchRegex })
+            const products = await Product.find<IProduct>({
+                title: searchRegex,
+            })
             const productIds = products.map((product) => product._id)
 
             orders = orders.filter((order) => {
@@ -326,7 +344,7 @@ export const createOrder = async (
             typeof str === 'string' ? xss(str) : ''
 
         items.forEach((idStr) => {
-            const id = new Types.ObjectId(idStr);
+            const id = new Types.ObjectId(idStr)
             const product = products.find((p) => p._id.equals(id))
             if (!product) {
                 throw new BadRequestError(`Товар с id ${id} не найден`)

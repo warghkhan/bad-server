@@ -246,7 +246,7 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
             filters as Record<string, string>
         ).toString()
         return this.requestWithRefresh<IOrderPaginationResult>(
-            `/order/all/me?${queryParams}`,
+            `//me?${queryParams}`,
             {
                 method: 'GET',
                 headers: {
