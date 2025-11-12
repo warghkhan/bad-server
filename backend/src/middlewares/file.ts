@@ -28,7 +28,9 @@ const storage = multer.diskStorage({
         file: Express.Multer.File,
         cb: FileNameCallback
     ) => {
-        cb(null, file.originalname)
+        const ext = file.originalname.split('.').pop()?.toLowerCase() || 'bin'
+        const safeFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`
+        cb(null, safeFilename)
     },
 })
 
