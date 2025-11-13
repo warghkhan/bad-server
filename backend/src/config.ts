@@ -34,3 +34,5 @@ export const CSRF_COOKIE = {
     maxAge: 24 * 60 * 60 * 1000, // 1 день
   },
 }
+
+export const ORIGIN_ALLOW = process.env.ORIGIN_ALLOW || 'http://localhost:5173';
