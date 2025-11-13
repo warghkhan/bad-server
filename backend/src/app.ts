@@ -16,19 +16,22 @@ const { PORT = 3000 } = process.env
 const app = express()
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100,                 
-  standardHeaders: true,   
-  legacyHeaders: false,
-  message: { success: false, message: 'Слишком много запросов, попробуйте позже' },
-  statusCode: 429,
-  
-});
-app.use(limiter);
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        success: false,
+        message: 'Слишком много запросов, попробуйте позже',
+    },
+    statusCode: 429,
+})
+app.set('trust proxy', 1)
+app.use(limiter)
 app.use(cookieParser())
 
 //app.use(cors())
-app.use(cors({ origin: ORIGIN_ALLOW, credentials: true }));
+app.use(cors({ origin: ORIGIN_ALLOW, credentials: true }))
 // app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(serveStatic(path.join(__dirname, 'public')))
