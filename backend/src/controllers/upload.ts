@@ -1,10 +1,10 @@
 // controllers/upload.ts
 import { NextFunction, Request, Response } from 'express'
 import { constants } from 'http2'
-import BadRequestError from '../errors/bad-request-error'
 import fs from 'fs'
 import path from 'path'
-import { fileTypeFromBuffer, fileTypeFromFile } from 'file-type'
+import { fileTypeFromFile } from 'file-type'
+import BadRequestError from '../errors/bad-request-error'
 
 const MIN_FILE_SIZE = 2 * 1024
 
@@ -50,14 +50,6 @@ export const uploadFile = async (
 
         if (!fileType || !allowedImageTypes.includes(fileType.mime)) {
             // Удаляем файл
-            const tempDir = process.env.UPLOAD_PATH_TEMP || 'temp'
-            const filePath = path.join(
-                __dirname,
-                '..',
-                'public',
-                tempDir,
-                filename
-            )
             fs.unlink(filePath, () => {})
 
             return res.status(400).json({
@@ -70,7 +62,7 @@ export const uploadFile = async (
             ? `/${process.env.UPLOAD_PATH}/${req.file.filename}`
             : `/${req.file?.filename}`
         return res.status(constants.HTTP_STATUS_CREATED).json({
-            //.send ???
+            // .send ???
             fileName,
             // originalName: req.file?.originalname,
         })

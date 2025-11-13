@@ -7,11 +7,11 @@ import express, { json, urlencoded } from 'express'
 import mongoose from 'mongoose'
 import path from 'path'
 import rateLimit from 'express-rate-limit'
+import fs from 'fs';
 import { DB_ADDRESS, ORIGIN_ALLOW } from './config'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
-import fs from 'fs';
 
 const ensureDir = (dir: string) => {
   if (!fs.existsSync(dir)) {
@@ -39,7 +39,7 @@ app.set('trust proxy', 1)
 app.use(limiter)
 app.use(cookieParser())
 
-//app.use(cors())
+// app.use(cors())
 app.use(cors({ origin: ORIGIN_ALLOW, credentials: true }))
 // app.use(express.static(path.join(__dirname, 'public')));
 

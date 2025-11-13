@@ -1,5 +1,6 @@
 // routes/customers.ts
 import { Router } from 'express'
+import rateLimit from 'express-rate-limit';
 import {
     deleteCustomer,
     getCustomerById,
@@ -8,7 +9,6 @@ import {
 } from '../controllers/customers'
 import auth, { roleGuardMiddleware } from '../middlewares/auth'
 import { Role } from '../models/user'
-import rateLimit from 'express-rate-limit';
 
 const strictLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
