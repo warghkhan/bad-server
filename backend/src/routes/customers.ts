@@ -8,8 +8,18 @@ import {
 } from '../controllers/customers'
 import auth, { roleGuardMiddleware } from '../middlewares/auth'
 import { Role } from '../models/user'
+import rateLimit from 'express-rate-limit';
+
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  statusCode: 429,
+  message: { success: false, message: 'Rate limit exceeded for /customers' },
+  standardHeaders: false,
+});
 
 const customerRouter = Router()
+customerRouter.use(strictLimiter);
 
 customerRouter.get('/', auth, roleGuardMiddleware(Role.Admin), getCustomers)
 customerRouter.get('/:id', auth, getCustomerById)
