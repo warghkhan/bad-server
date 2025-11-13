@@ -11,6 +11,15 @@ import { DB_ADDRESS, ORIGIN_ALLOW } from './config'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
+import fs from 'fs';
+
+const ensureDir = (dir: string) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    }
+};
+
+ensureDir(path.join(__dirname, 'public', process.env.UPLOAD_PATH_TEMP || 'temp'));
 
 const { PORT = 3000 } = process.env
 const app = express()
