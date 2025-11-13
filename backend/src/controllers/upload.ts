@@ -4,6 +4,7 @@ import { constants } from 'http2'
 import BadRequestError from '../errors/bad-request-error'
 import fs from 'fs'
 import path from 'path'
+import { fileTypeFromBuffer, fileTypeFromFile } from 'file-type'
 
 const MIN_FILE_SIZE = 2 * 1024
 
@@ -35,6 +36,36 @@ export const uploadFile = async (
     }
 
     try {
+        const allowedImageTypes = [
+            'image/png',
+            'image/jpeg',
+            'image/gif',
+            'image/webp',
+            'image/svg+xml',
+        ]
+
+        const tempDir = process.env.UPLOAD_PATH_TEMP || 'temp'
+        const filePath = path.join(__dirname, '..', 'public', tempDir, filename)
+        const fileType = await fileTypeFromFile(filePath)
+
+        if (!fileType || !allowedImageTypes.includes(fileType.mime)) {
+            // Удаляем файл
+            const tempDir = process.env.UPLOAD_PATH_TEMP || 'temp'
+            const filePath = path.join(
+                __dirname,
+                '..',
+                'public',
+                tempDir,
+                filename
+            )
+            fs.unlink(filePath, () => {})
+
+            return res.status(400).json({
+                success: false,
+                message: 'Файл не является валидным изображением',
+            })
+        }
+
         const fileName = process.env.UPLOAD_PATH
             ? `/${process.env.UPLOAD_PATH}/${req.file.filename}`
             : `/${req.file?.filename}`
