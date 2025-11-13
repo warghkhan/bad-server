@@ -1,13 +1,26 @@
+// controllers/order.ts
 import { NextFunction, Request, Response } from 'express'
 import { FilterQuery, Error as MongooseError, Types } from 'mongoose'
+import xss from 'xss'
 import BadRequestError from '../errors/bad-request-error'
 import NotFoundError from '../errors/not-found-error'
-import Order, { IOrder } from '../models/order'
+import Order, { IOrder, StatusType } from '../models/order'
 import Product, { IProduct } from '../models/product'
 import User from '../models/user'
+import escapeRegExp from '../utils/escapeRegExp'
 
 // eslint-disable-next-line max-len
 // GET /orders?page=2&limit=5&sort=totalAmount&order=desc&orderDateFrom=2024-07-01&orderDateTo=2024-08-01&status=delivering&totalAmountFrom=100&totalAmountTo=1000&search=%2B1
+
+interface CreateOrderBody {
+    address: string
+    payment: string
+    phone: string
+    total: number
+    email: string
+    items: string[]
+    comment?: string
+}
 
 export const getOrders = async (
     req: Request,
@@ -15,9 +28,11 @@ export const getOrders = async (
     next: NextFunction
 ) => {
     try {
+        const page = Math.max(1, parseInt(req.query.page as string, 10) || 1)
+        const rawLimit = parseInt(req.query.limit as string, 10) || 10
+        const limit = Math.min(Math.max(1, rawLimit), 10)
+
         const {
-            page = 1,
-            limit = 10,
             sortField = 'createdAt',
             sortOrder = 'desc',
             status,
@@ -30,15 +45,42 @@ export const getOrders = async (
 
         const filters: FilterQuery<Partial<IOrder>> = {}
 
+        if (status != null) {
+            if (typeof status !== 'string') {
+                return next(
+                    new BadRequestError(
+                        'Невалидный параметр status: должен быть строкой'
+                    )
+                )
+            }
+            if (!Object.values(StatusType).includes(status as StatusType)) {
+                return next(new BadRequestError('Неизвестный статус заказа'))
+            }
+            filters.status = status
+        }
+        /*
+        if (status) {
+            if (typeof status !== 'string') {
+                return next(new BadRequestError('Невалидный параметр status'))
+            }
+
+            if (!Object.values(StatusType).includes(status as StatusType)) {
+                return next(new BadRequestError('Неизвестный статус заказа'))
+            }
+
+            filters.status = status
+        }
+
+        
         if (status) {
             if (typeof status === 'object') {
-                Object.assign(filters, status)
+                //Object.assign(filters, status)
             }
             if (typeof status === 'string') {
                 filters.status = status
             }
         }
-
+*/
         if (totalAmountFrom) {
             filters.totalAmount = {
                 ...filters.totalAmount,
@@ -89,8 +131,9 @@ export const getOrders = async (
             { $unwind: '$products' },
         ]
 
-        if (search) {
-            const searchRegex = new RegExp(search as string, 'i')
+        if (search && typeof search === 'string') {
+            const escapedSearch = escapeRegExp(search)
+            const searchRegex = new RegExp(escapedSearch, 'i')
             const searchNumber = Number(search)
 
             const searchConditions: any[] = [{ 'products.title': searchRegex }]
@@ -133,15 +176,15 @@ export const getOrders = async (
 
         const orders = await Order.aggregate(aggregatePipeline)
         const totalOrders = await Order.countDocuments(filters)
-        const totalPages = Math.ceil(totalOrders / Number(limit))
+        const totalPages = Math.ceil(totalOrders / limit)
 
         res.status(200).json({
             orders,
             pagination: {
                 totalOrders,
                 totalPages,
-                currentPage: Number(page),
-                pageSize: Number(limit),
+                currentPage: page,
+                pageSize: limit,
             },
         })
     } catch (error) {
@@ -183,11 +226,15 @@ export const getOrdersCurrentUser = async (
 
         let orders = user.orders as unknown as IOrder[]
 
-        if (search) {
+        if (search && typeof search === 'string') {
             // если не экранировать то получаем Invalid regular expression: /+1/i: Nothing to repeat
-            const searchRegex = new RegExp(search as string, 'i')
+
+            const escapedSearch = escapeRegExp(search)
+            const searchRegex = new RegExp(escapedSearch, 'i')
             const searchNumber = Number(search)
-            const products = await Product.find({ title: searchRegex })
+            const products = await Product.find<IProduct>({
+                title: searchRegex,
+            })
             const productIds = products.map((product) => product._id)
 
             orders = orders.filter((order) => {
@@ -292,9 +339,12 @@ export const createOrder = async (
         const products = await Product.find<IProduct>({})
         const userId = res.locals.user._id
         const { address, payment, phone, total, email, items, comment } =
-            req.body
+            req.body as CreateOrderBody
+        const sanitizeString = (str: any): string =>
+            typeof str === 'string' ? xss(str) : ''
 
-        items.forEach((id: Types.ObjectId) => {
+        items.forEach((idStr) => {
+            const id = new Types.ObjectId(idStr)
             const product = products.find((p) => p._id.equals(id))
             if (!product) {
                 throw new BadRequestError(`Товар с id ${id} не найден`)
@@ -315,9 +365,9 @@ export const createOrder = async (
             payment,
             phone,
             email,
-            comment,
+            comment: sanitizeString(comment),
             customer: userId,
-            deliveryAddress: address,
+            deliveryAddress: sanitizeString(address),
         })
         const populateOrder = await newOrder.populate(['customer', 'products'])
         await populateOrder.save()

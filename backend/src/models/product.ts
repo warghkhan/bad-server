@@ -1,5 +1,6 @@
+// models/product.ts
 import { unlink } from 'fs'
-import mongoose, { Document } from 'mongoose'
+import mongoose, { Document, Types } from 'mongoose'
 import { join } from 'path'
 
 export interface IFile {
@@ -8,6 +9,7 @@ export interface IFile {
 }
 
 export interface IProduct extends Document {
+     _id: Types.ObjectId
     title: string
     image: IFile
     category: string

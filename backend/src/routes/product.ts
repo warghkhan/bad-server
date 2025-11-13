@@ -1,3 +1,4 @@
+// routes/product.ts
 import { Router } from 'express'
 import {
     createProduct,

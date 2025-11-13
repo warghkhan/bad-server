@@ -17,6 +17,7 @@ import {
     UserResponseToken,
 } from '@types'
 import { getCookie, setCookie } from './cookie'
+import { getCsrfToken, setCsrfToken } from './csrf'
 
 export const enum RequestStatus {
     Idle = 'idle',
@@ -65,13 +66,31 @@ class Api {
         }
     }
 
+    private refreshToken = async () => {
+        const response = await this.request<
+            UserResponseToken & { csrfToken?: string }
+        >('/auth/token', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'X-CSRF-Token': getCsrfToken() || '',
+            },
+        })
+        if (response.success && response.csrfToken) {
+            setCsrfToken(response.csrfToken)
+            setCookie('accessToken', response.accessToken)
+        }
+        return response
+    }
+
+    /*
     private refreshToken = () => {
         return this.request<UserResponseToken>('/auth/token', {
             method: 'GET',
             credentials: 'include',
         })
     }
-
+*/
     protected requestWithRefresh = async <T>(
         endpoint: string,
         options: RequestInit
@@ -109,6 +128,11 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
     constructor(cdn: string, baseUrl: string, options?: RequestInit) {
         super(baseUrl, options)
         this.cdn = cdn
+    }
+
+    private withCsrfHeaders(headers?: HeadersInit): HeadersInit {
+        const csrf = getCsrfToken()
+        return csrf ? { ...headers, 'X-CSRF-Token': csrf } : headers || {}
     }
 
     getProductItem = (id: string): Promise<IProduct> => {
@@ -150,6 +174,33 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
         return this.requestWithRefresh<IOrderResult>('/order', {
             method: 'POST',
             body: JSON.stringify(order),
+            headers: this.withCsrfHeaders({
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${getCookie('accessToken')}`,
+            }),
+        })
+    }
+
+    updateOrderStatus = (
+        status: StatusType,
+        orderNumber: string
+    ): Promise<IOrderResult> => {
+        return this.requestWithRefresh<IOrderResult>(`/order/${orderNumber}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+            headers: this.withCsrfHeaders({
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${getCookie('accessToken')}`,
+            }),
+        })
+    }
+
+    /*
+
+    createOrder = (order: IOrder): Promise<IOrderResult> => {
+        return this.requestWithRefresh<IOrderResult>('/order', {
+            method: 'POST',
+            body: JSON.stringify(order),
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${getCookie('accessToken')}`,
@@ -170,7 +221,7 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
             },
         })
     }
-
+*/
     getAllOrders = (
         filters: Record<string, unknown> = {}
     ): Promise<IOrderPaginationResult> => {
@@ -195,7 +246,7 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
             filters as Record<string, string>
         ).toString()
         return this.requestWithRefresh<IOrderPaginationResult>(
-            `/order/all/me?${queryParams}`,
+            `//me?${queryParams}`,
             {
                 method: 'GET',
                 headers: {
@@ -226,6 +277,37 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
         )
     }
 
+    loginUser = async (data: UserLoginBodyDto) => {
+        const response = await this.request<
+            UserResponseToken & { csrfToken?: string }
+        >('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        })
+        if (response.success && response.csrfToken) {
+            setCsrfToken(response.csrfToken)
+        }
+        return response
+    }
+
+    registerUser = async (data: UserRegisterBodyDto) => {
+        const response = await this.request<
+            UserResponseToken & { csrfToken?: string }
+        >('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        })
+        if (response.success && response.csrfToken) {
+            setCsrfToken(response.csrfToken)
+        }
+        return response
+    }
+
+    /*
     loginUser = (data: UserLoginBodyDto) => {
         return this.request<UserResponseToken>('/auth/login', {
             method: 'POST',
@@ -247,7 +329,7 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
             credentials: 'include',
         })
     }
-
+*/
     getUser = () => {
         return this.requestWithRefresh<UserResponse>('/auth/user', {
             method: 'GET',
@@ -295,9 +377,18 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
         return this.request<ServerResponse<unknown>>('/auth/logout', {
             method: 'GET',
             credentials: 'include',
+            headers: this.withCsrfHeaders(), // ← обязательно!
         })
     }
 
+    /*
+    logoutUser = () => {
+        return this.request<ServerResponse<unknown>>('/auth/logout', {
+            method: 'GET',
+            credentials: 'include',
+        })
+    }
+*/
     createProduct = (data: Omit<IProduct, '_id'>) => {
         console.log(data)
         return this.requestWithRefresh<IProduct>('/product', {

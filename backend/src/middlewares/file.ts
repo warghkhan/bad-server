@@ -1,3 +1,4 @@
+// middlewares/file.ts
 import { Request, Express } from 'express'
 import multer, { FileFilterCallback } from 'multer'
 import { join } from 'path'
@@ -27,7 +28,9 @@ const storage = multer.diskStorage({
         file: Express.Multer.File,
         cb: FileNameCallback
     ) => {
-        cb(null, file.originalname)
+        const ext = file.originalname.split('.').pop()?.toLowerCase() || 'bin'
+        const safeFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`
+        cb(null, safeFilename)
     },
 })
 
@@ -51,4 +54,13 @@ const fileFilter = (
     return cb(null, true)
 }
 
-export default multer({ storage, fileFilter })
+export default multer({
+    storage,
+    fileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024,
+        files: 1,
+        fieldNameSize: 100,
+        fieldSize: 1 * 1024 * 1024,
+    },
+})

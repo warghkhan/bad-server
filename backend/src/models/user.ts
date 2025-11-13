@@ -1,3 +1,4 @@
+// models/user.ts
 /* eslint-disable no-param-reassign */
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
@@ -13,7 +14,8 @@ export enum Role {
     Admin = 'admin',
 }
 
-export interface IUser extends Document {
+export interface IUser extends Document<Types.ObjectId> {
+    _id: Types.ObjectId
     name: string
     email: string
     password: string
@@ -106,11 +108,8 @@ const userSchema = new mongoose.Schema<IUser, IUserModel, IUserMethods>(
         toJSON: {
             virtuals: true,
             transform: (_doc, ret) => {
-                delete ret.tokens
-                delete ret.password
-                delete ret._id
-                delete ret.roles
-                return ret
+                const { tokens: _tokens, password: _password, _id, roles: _roles, __v, ...safeUser } = ret;
+                return safeUser
             },
         },
     }

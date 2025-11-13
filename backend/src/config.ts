@@ -1,3 +1,4 @@
+// config.ts
 import { CookieOptions } from 'express'
 import ms from 'ms'
 
@@ -22,3 +23,16 @@ export const REFRESH_TOKEN = {
         } as CookieOptions,
     },
 }
+
+export const CSRF_COOKIE = {
+  name: 'csrfToken',
+  options: {
+    httpOnly: false, 
+    sameSite: 'strict' as const,
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 24 * 60 * 60 * 1000, // 1 день
+  },
+}
+
+export const ORIGIN_ALLOW = process.env.ORIGIN_ALLOW || 'http://localhost:5173';
